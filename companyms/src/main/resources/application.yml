@@ -1,0 +1,6 @@
+spring:
+    application:
+        name: jobapp-company-service
+
+server:
+    port: 8081

@@ -1,0 +1,10 @@
+spring:
+    application:
+        name: jobapp-job-service
+
+    datasource:
+        url: jdbc://post
+
+
+server:
+    port: 8082

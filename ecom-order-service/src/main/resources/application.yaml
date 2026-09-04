@@ -1,0 +1,97 @@
+spring:
+    application:
+        name: ecom-order-service
+
+    datasource:
+        url: jdbc:mysql://localhost:3030/demodb
+        username: user
+        password: userpass
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+    cloud:
+        openfeign:
+            client:
+                config:
+                    ecom-inventory-service:
+                        connectTimeout: 2000
+                        readTimeout: 30000
+server:
+    port: 8080
+
+# logging:
+#     level:
+#         in.akhilesh.ecomorderservice.client: DEBUG
+#         com.netflix.discovery: DEBUG
+
+eureka:
+    client:
+        register-with-eureka: true
+        fetch-registry: true
+        registry-fetch-interval-seconds: 30
+        service-url:
+            defaultZone: http://localhost:8761/eureka
+
+    instance:
+        lease-renewal-interval-in-seconds: 30
+
+resilience4j:
+    ratelimiter:
+        instances:
+            inventoryService:
+                limit-for-period: 2
+                limit-refresh-period: 10s
+                timeout-duration: 0s
+
+
+    circuitbreaker:
+        instances:
+            inventoryServiceCircuitBreaker:
+
+                # SLIDING WINDOW CONFIGURATION
+                sliding-window-type: COUNT_BASED
+                sliding-window-size: 6
+                minimum-number-of-calls: 1
+
+                # FAILURE THRESHOLD
+                failure-rate-threshold: 50
+
+                # SLOW CALL CONFIGURATION
+                slow-call-rate-threshold: 50
+
+                # OPEN STATE CONFIGURATION
+                wait-duration-in-open-state: 10s
+
+                # HALF OPEN CONFIGURATION
+                permitted-number-of-calls-in-half-open-state: 3
+                max-wait-duration-in-half-open-state: 5s
+                automatic-transition-from-open-to-half-open-enabled: true
+
+                # ON WHICH EXCEPTIONS INVOKE CIRCUIT BREAKER
+                record-exceptions:
+                    - java.lang.RuntimeException
+                    - java.io.IOException
+                    - org.springframework.web.client.HttpServerErrorException
+
+                ignore-exceptions:
+                    - java.lang.IllegalArgumentException
+    timelimiter:
+        instances:
+            inventoryServiceTimeLimiter:
+                timeout-duration: 2s
+                cancel-running-future: true
+
+
+    bulkhead:
+        instances:
+            inventoryServiceBulkhead:
+                max-concurrent-calls: 2
+                max-wait-duration: 10s
+    thread-pool-bulkhead:
+        instances:
+            inventoryThreadPool:
+                max-thread-pool-size: 3
+                core-thread-pool-size: 1
+                queue-capacity: 0
